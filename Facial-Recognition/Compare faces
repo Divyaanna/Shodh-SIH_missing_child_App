@@ -1,0 +1,64 @@
+#Modules
+import cv2
+import numpy as np
+from matplotlib import pyplot as plt
+import face_recognition
+from sklearn.metrics import confusion_matrix
+from sklearn.metrics import accuracy_score
+from sklearn.metrics import classification_report
+from skimage.metrics import structural_similarity as ssim
+
+
+#Main Code
+
+path1=r'C:\Users\Mayur\Documents\SIH\Compare\Image1.jpeg'
+image1 = cv2.imread(path1)                          #Giving path location to camera scanned image
+image1 = cv2.cvtColor(image1, cv2.COLOR_BGR2RGB)     #Converting the image into RGB code
+for i in range(1,19):      #Traversing the similar image in the database
+    path2=r'C:\Users\Mayur\Documents\SIH\Compare\Image'+str(i)+'.jpeg'
+    image2 = cv2.imread(path2)    #Giving path location to image stored in database
+    image2 = cv2.cvtColor(image2, cv2.COLOR_BGR2RGB)     #Converting the image into RGB code
+
+    if image1.shape == image2.shape:         #Checking both image have same size and channels or not
+        print("Same size")
+
+        #Checking channels of both image are equal or not
+        difference = cv2.subtract(image1,image2)  #Subtracting each pixel value from both images
+        b,g,r=cv2.split(difference)
+        if cv2.countNonZero(b) == 0 and cv2.countNonZero(g) == 0 and cv2.countNonZero(r) == 0:   #Since there are 3 channels (RGB) we are subtracting every single channel to check if all channels are black
+          print("Image channels are equal")    #If yes then images are equal
+        
+        else:
+            print("Image channels are not equal")
+
+    else:
+        print("Images are not equal")   #Or else images are not equal
+
+
+    x1 = face_recognition.face_locations(image1)[0]  #An array that lists the coordinates of image1
+    encoder_x1 = face_recognition.face_encodings(image1)[0]  #A list of 128 dimensional face encodings
+
+    m1 = cv2.rectangle(image1, (x1[3],x1[0]), (x1[1],x1[2]),(255,0,0),2)   #Creating/Making rectangle and (2 is the thickness)
+
+    x2 = face_recognition.face_locations(image2)[0]   #An array that lists the coordinates of image2
+    encoder_x2 = face_recognition.face_encodings(image2)[0]  #A list of 128 dimensional face encodings
+
+    m2 = cv2.rectangle(image2, (x2[3],x2[0]), (x2[1],x2[2]),(255,0,0),2)   #Creating/Making rectangle and (2 is the thickness)
+
+    a = face_recognition.compare_faces([encoder_x1],encoder_x2)  #Comparing faces
+    b = face_recognition.face_distance([encoder_x1],encoder_x2)  #Face unmatched distance   Using Euclidean distance
+
+    print(a,b)
+
+    face_match_percentage = (1-b)*100    #Face matched percentage i.e Accuracy between compared faces
+    for i, face_distance in enumerate(b):
+        print(np.round(face_match_percentage,4))   #Upto 4 decimal round off
+    
+    
+    if a[0]==True:    #If the image matched is True then only we are showing/plotting the image
+        plt.figure()
+        plt.subplot(121)
+        plt.imshow(image1)
+        plt.subplot(122)
+        plt.imshow(image2)
+        plt.show()
